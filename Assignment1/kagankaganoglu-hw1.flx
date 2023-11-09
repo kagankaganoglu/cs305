@@ -1,0 +1,172 @@
+    #include <string.h>
+%x IN_COMMENT
+DIGIT [0-9]
+LOWERLETTER [a-z]
+CAPITALLETTER [A-Z]
+LETTER [A-Za-z]
+    int numlines = 1;
+    int commentDepth = 0;
+
+%%
+\n  ++numlines;
+
+\/\*  {
+    commentDepth++;
+    BEGIN(IN_COMMENT);
+}
+
+<IN_COMMENT>\/\* {
+    commentDepth++;
+}
+
+<IN_COMMENT>\*\/ {
+    commentDepth--;
+    if (commentDepth == 0){
+        BEGIN(INITIAL);
+    }
+}
+
+<IN_COMMENT>\n {
+    numlines++;
+}
+<IN_COMMENT>. {}
+
+Mail {printf("%d_tMAIL\n", numlines);}
+schedule {printf("%d_tSCHEDULE\n", numlines);}
+end[[:space:]]+Mail {printf("%d_tENDMAIL\n", numlines);
+                    int i = 0;
+                    while(i < strlen(yytext)){
+                        if(yytext[i] == '\n'){
+                            numlines++;;
+                        }
+                        i++;
+                    }
+}
+end[[:space:]]+schedule {printf("%d_tENDSCHEDULE\n", numlines);
+                        int i = 0;
+                    while(i < strlen(yytext)){
+                        if(yytext[i] == '\n'){
+                            numlines++;;
+                        }
+                        i++;
+                    }
+}
+send {printf("%d_tSEND\n", numlines);}
+to {printf("%d_tTO\n", numlines);}
+from {printf("%d_tFROM\n", numlines);}
+set {printf("%d_tSET\n", numlines);}
+
+,   {printf("%d_tCOMMA\n", numlines);}
+:   {printf("%d_tCOLON\n", numlines);}
+\(  {printf("%d_tLPR\n", numlines);}
+\)  {printf("%d_tRPR\n", numlines);}
+\[  {printf("%d_tLBR\n", numlines);}
+\]  {printf("%d_tRBR\n", numlines);}
+@  {printf("%d_tAT\n", numlines);}
+
+[a-zA-Z_][a-zA-Z0-9_]*  {printf("%d_tIDENT_(%s)\n", numlines, yytext);}
+\"[^\"]*\"  {
+    printf("%d_tSTRING_\(", numlines);
+    int i = 0;
+    while(i < strlen(yytext)){
+        if(yytext[i] == '\n'){
+            numlines++;;
+        }
+        i++;
+    }
+    int j = 1;
+    while (j < strlen(yytext) - 1) {
+            printf("%c", yytext[j]);
+            j++;
+        }
+        printf(")\n");
+    }
+[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)*@[a-zA-Z0-9]+(-?[a-zA-Z0-9]+)*(\.[a-zA-Z0-9]*(-?[a-zA-Z0-9]+)*){1,2}  {printf("%d_tADDRESS_(%s)\n", numlines, yytext);}
+[0-9]{2}\/[0-9]{2}\/[0-9]{4}  {printf("%d_tDATE_", numlines);
+                                printf("(Day_");
+                                int i = 0;
+                                while(i < 2){
+                                    printf("%c", yytext[i]);
+                                    i++;
+                                }
+                                printf("_Month_");
+                                i++;
+                                while(i < 5){
+                                    printf("%c", yytext[i]);
+                                    i++;
+                                }
+                                printf("_Year_");
+                                i++;
+                                while(i < 10){
+                                    printf("%c", yytext[i]);
+                                    i++;
+                                }
+                                printf(")\n");
+                            }
+[0-9]{2}-[0-9]{2}-[0-9]{4}  {printf("%d_tDATE_", numlines);
+                                printf("(Day_");
+                                int i = 0;
+                                while(i < 2){
+                                    printf("%c", yytext[i]);
+                                    i++;
+                                }
+                                printf("_Month_");
+                                i++;
+                                while(i < 5){
+                                    printf("%c", yytext[i]);
+                                    i++;
+                                }
+                                printf("_Year_");
+                                i++;
+                                while(i < 10){
+                                    printf("%c", yytext[i]);
+                                    i++;
+                                }
+                                printf(")\n");
+                            }
+[0-9]{2}\.[0-9]{2}\.[0-9]{4}  {printf("%d_tDATE_", numlines);
+                                printf("(Day_");
+                                int i = 0;
+                                while(i < 2){
+                                    printf("%c", yytext[i]);
+                                    i++;
+                                }
+                                printf("_Month_");
+                                i++;
+                                while(i < 5){
+                                    printf("%c", yytext[i]);
+                                    i++;
+                                }
+                                printf("_Year_");
+                                i++;
+                                while(i < 10){
+                                    printf("%c", yytext[i]);
+                                    i++;
+                                }
+                                printf(")\n");
+                            }
+[0-9]{2}:[0-9]{2}  {printf("%d_tTIME_", numlines);
+                                printf("(Hour_");
+                                int i = 0;
+                                while(i < 2){
+                                    printf("%c", yytext[i]);
+                                    i++;
+                                }
+                                printf("_Minute_");
+                                i++;
+                                while(i < 5){
+                                    printf("%c", yytext[i]);
+                                    i++;
+                                }
+                                printf(")\n");
+                    }
+
+\/\/[^\n]*  {}
+[^[:space:]] {printf("%d_ILLEGAL_CHARACTER_(%s)\n", numlines, yytext);}
+
+. {}
+%%
+
+main(){
+    yylex();
+}
